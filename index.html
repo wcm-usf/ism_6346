@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Digital Maturity Self-Assessment: Private K-12 Schools</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --ink: #1a2233; --ink-2: #4a5468; --ink-3: #7a8396;
+    --line: #dde2ea; --bg: #f5f7fa; --card: #ffffff;
+    --navy: #1f3864; --navy-2: #2f5597; --navy-soft: #e8eef8;
+    --warn: #9a3412; --warn-soft: #fff4ec;
+    --ok: #166534;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+         color: var(--ink); background: var(--bg); line-height: 1.5; font-size: 16px; }
+  header.top { background: var(--navy); color: #fff; }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 0 20px; }
+  header.top .wrap { padding-top: 36px; padding-bottom: 32px; }
+  .eyebrow { text-transform: uppercase; letter-spacing: .08em; font-size: 12px; font-weight: 600; opacity: .75; margin: 0 0 8px; }
+  h1 { font-size: 30px; line-height: 1.2; margin: 0 0 10px; font-weight: 700; }
+  header.top p.lede { margin: 0; max-width: 660px; opacity: .9; }
+  .meta { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 18px; font-size: 14px; opacity: .85; }
+
+  nav.progress { position: sticky; top: 0; z-index: 10; background: rgba(255,255,255,.96); border-bottom: 1px solid var(--line);
+                 backdrop-filter: blur(6px); }
+  nav.progress .wrap { display: flex; align-items: center; gap: 10px; padding-top: 10px; padding-bottom: 10px; flex-wrap: wrap; }
+  .pill { font-size: 13px; padding: 4px 10px; border-radius: 999px; background: var(--bg); color: var(--ink-2);
+          text-decoration: none; border: 1px solid var(--line); white-space: nowrap; }
+  .pill.done { background: var(--navy-soft); color: var(--navy); border-color: #c5d3ea; }
+  .count { margin-left: auto; font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+
+  .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 24px 0 8px; font-size: 14px; color: var(--ink-2); }
+  button { font: inherit; cursor: pointer; border-radius: 8px; }
+  .btn-ghost { background: var(--card); border: 1px solid var(--line); color: var(--ink); padding: 6px 12px; font-size: 14px; }
+  .btn-ghost:hover { border-color: var(--navy-2); color: var(--navy); }
+  .btn-primary { background: var(--navy); color: #fff; border: 0; padding: 12px 22px; font-weight: 600; font-size: 16px; }
+  .btn-primary:hover { background: var(--navy-2); }
+  button:focus-visible, input:focus-visible + span { outline: 3px solid #8fb0e8; outline-offset: 2px; }
+
+  section.dim { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); margin: 22px 0; overflow: hidden; scroll-margin-top: 64px; }
+  .dim-head { padding: 18px 22px; border-bottom: 1px solid var(--line); background: linear-gradient(#fbfcfe, #f6f8fc); }
+  .dim-head .num { font-size: 12px; font-weight: 700; color: var(--navy-2); letter-spacing: .06em; text-transform: uppercase; }
+  .dim-head h2 { margin: 2px 0 4px; font-size: 21px; color: var(--navy); }
+  .dim-head p { margin: 0; color: var(--ink-2); font-size: 14.5px; }
+
+  fieldset.q { border: 0; margin: 0; padding: 18px 22px 20px; border-bottom: 1px solid var(--line); scroll-margin-top: 70px; }
+  fieldset.q:last-child { border-bottom: 0; }
+  fieldset.q legend { padding: 0; font-weight: 600; font-size: 16px; margin-bottom: 10px; display: flex; gap: 10px; }
+  fieldset.q legend .qid { color: var(--ink-3); font-weight: 600; font-size: 13px; padding-top: 2px; min-width: 24px; }
+  fieldset.q.missing { background: var(--warn-soft); }
+  fieldset.q.missing legend::after { content: "Answer required"; color: var(--warn); font-size: 12px; font-weight: 700; margin-left: auto;
+                                      white-space: nowrap; padding-top: 3px; }
+  .opts { display: grid; gap: 6px; padding-left: 34px; }
+  label.opt { display: flex; gap: 10px; align-items: flex-start; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px;
+              cursor: pointer; font-size: 15px; color: var(--ink); background: #fff; transition: border-color .12s, background .12s; }
+  label.opt:hover { border-color: #b7c6e0; }
+  label.opt input { margin: 4px 0 0; accent-color: var(--navy); flex: none; }
+  label.opt:has(input:checked) { border-color: var(--navy-2); background: var(--navy-soft); }
+
+  .submit-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin: 28px 0 48px; }
+  .error { color: var(--warn); font-weight: 600; font-size: 14.5px; }
+
+  #results { display: none; margin: 8px 0 60px; scroll-margin-top: 60px; }
+  #results.show { display: block; }
+  .res-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; }
+  .res-title { margin: 0 0 4px; font-size: 24px; color: var(--navy); }
+  .res-sub { margin: 0 0 18px; color: var(--ink-2); font-size: 15px; }
+  .res-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+  @media (max-width: 760px) { .res-grid { grid-template-columns: minmax(0, 1fr); } .res-card { padding: 18px; } h1 { font-size: 25px; } .opts { padding-left: 0; } }
+  .chart-box { position: relative; height: 420px; }
+  @media (max-width: 760px) { .chart-box { height: 360px; } }
+  table.scores { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  table.scores th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); font-weight: 600;
+                    padding: 0 0 8px; border-bottom: 1px solid var(--line); }
+  table.scores td { padding: 9px 0; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  table.scores td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; width: 54px; }
+  table.scores tr.low td:first-child { font-weight: 700; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--warn);
+         background: var(--warn-soft); border: 1px solid #f3d3bd; border-radius: 4px; padding: 1px 6px; margin-left: 6px; vertical-align: 1px; }
+  .bar { height: 6px; background: var(--bg); border-radius: 3px; margin-top: 5px; overflow: hidden; }
+  .bar span { display: block; height: 100%; background: var(--navy-2); border-radius: 3px; }
+  .stage-note { font-size: 12.5px; color: var(--ink-3); margin-top: 10px; }
+
+  .profile { border-left: 5px solid var(--navy); padding: 4px 0 4px 18px; }
+  .profile .label { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-3); font-weight: 700; }
+  .profile h3 { margin: 2px 0 8px; font-size: 22px; color: var(--navy); }
+  .profile .rule { font-size: 13.5px; color: var(--ink-2); margin: 0 0 10px; }
+  .profile p { margin: 0 0 12px; }
+  .action { background: var(--navy-soft); border-radius: 8px; padding: 14px 16px; }
+  .action strong { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--navy); margin-bottom: 3px; }
+  .lows { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
+  @media (max-width: 600px) { .lows { grid-template-columns: 1fr; } }
+  .low-card { border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
+  .low-card .k { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--warn); font-weight: 700; }
+  .low-card h4 { margin: 3px 0 6px; font-size: 16px; }
+  .low-card p { margin: 0; font-size: 14px; color: var(--ink-2); }
+  .tie-note { margin: 14px 0 0; font-size: 14px; color: var(--ink-2); }
+  footer { color: var(--ink-3); font-size: 13px; padding: 0 0 40px; }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <p class="eyebrow">Digital Maturity Self-Assessment</p>
+    <h1>Private K-12 Schools</h1>
+    <p class="lede">Twenty observable questions across five capability dimensions. Choose the option that matches what is true at your school today, not what is planned. Your answers produce a score from 1 to 5 on each dimension, a radar profile, and a recommended next action.</p>
+    <div class="meta"><span>About 10 minutes</span><span>Nothing is saved or sent</span><span>All questions required</span></div>
+  </div>
+</header>
+
+<nav class="progress" aria-label="Assessment progress">
+  <div class="wrap" id="progressBar"></div>
+</nav>
+
+<main class="wrap">
+  <div class="toolbar">
+    <span>Test with sample answers:</span>
+    <button type="button" class="btn-ghost" data-sim="2">Fill Stage 2 school</button>
+    <button type="button" class="btn-ghost" data-sim="4">Fill Stage 4 school</button>
+    <button type="button" class="btn-ghost" id="resetBtn">Clear answers</button>
+  </div>
+
+  <form id="assessment" novalidate></form>
+
+  <div class="submit-row">
+    <button type="button" class="btn-primary" id="submitBtn">See my results</button>
+    <span class="error" id="errorMsg" role="alert"></span>
+  </div>
+
+  <section id="results" aria-live="polite">
+    <div class="res-card">
+      <h2 class="res-title">Your maturity profile</h2>
+      <p class="res-sub" id="resSub"></p>
+      <div class="res-grid">
+        <div class="chart-box"><canvas id="radar" role="img" aria-label="Radar chart of the five dimension scores"></canvas></div>
+        <div>
+          <table class="scores" id="scoreTable">
+            <thead><tr><th>Dimension</th><th style="text-align:right">Score</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <p class="stage-note">Score = average of the dimension's four answers (1 = Stage 1, 5 = Stage 5), shown to two decimals.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="res-card" id="interpretation"></div>
+  </section>
+
+  <footer>
+    Team-built tool, Week 5 Group Activity. Framework: Kamil Szmyglewski (Framework Designer). Questions: William Mullarkey (Question Author). Tool: Troy Gonzalez (Tool Builder).
+  </footer>
+</main>
+
+<script>
+// Single source of truth for all three deliverables (framework doc, rationale doc, HTML tool).
+const DIMENSIONS = [
+  {
+    id: "data",
+    name: "Student & Family Data Foundation",
+    short: "Data Foundation",
+    observes: "Whether student, family, billing, and admissions records live in one supported system of record, including unstructured files such as health forms and learning plans.",
+    stage1: "Paper files and unsupported desktop software, with manual re-entry between systems",
+    stage5: "One integrated system of record, or governed integrations, updated in real time with role-based, audit-logged access",
+    stages: [
+      "Records are on paper or in spreadsheets. Accounting runs on software the vendor no longer supports, and the same family details are re-keyed in each system.",
+      "A student information system (SIS) holds grades and attendance. Billing, admissions, and accounting keep separate copies of family data and are reconciled by hand each term.",
+      "Records, billing, and admissions share one student ID and sync on a schedule (nightly or weekly). Staff can pull a family's full record without re-keying.",
+      "One supported system of record covers admissions, academics, billing, and re-enrollment, and a change is visible to every office the same day. Health forms and learning plans are attached to the student record with role-based access.",
+      "A single integrated system, or governed integrations, updates within minutes across academics, finance, co-curriculars, and communications. Access is role-based and every view or change of a sensitive record is audit-logged."
+    ]
+  },
+  {
+    id: "channels",
+    name: "Family & Student Engagement Channels",
+    short: "Engagement Channels",
+    observes: "How families enroll, pay, and receive information, and whether the school runs those touchpoints on one platform or many.",
+    stage1: "Phone, paper forms, and email only",
+    stage5: "One platform for profiles, schedules, billing, and messaging by app, text, and email, with usage tracked",
+    stages: [
+      "Families reach the school by phone, paper forms, and email. Announcements go out on paper or by mass email from a shared inbox.",
+      "A website or parent portal shows grades or events. Re-enrollment contracts and tuition payment are still handled on paper, by email, or by phone.",
+      "Families complete re-enrollment and pay tuition online. Messages go out by email and text, but through separate tools with separate logins and contact lists.",
+      "One portal or app shows schedules, grades, billing, and messages under a single login. Contact details sync from the student record and families choose their notification channel.",
+      "Families and students use one platform for profiles, schedules, billing, forms, and messaging by app, text, and email. The school tracks delivery, read rates, and online-payment share and follows up on gaps."
+    ]
+  },
+  {
+    id: "ops",
+    name: "Administrative & Business Operations Automation",
+    short: "Operations Automation",
+    observes: "How tuition billing, the admissions pipeline, new-student hand-offs, and financial reporting move from step to step.",
+    stage1: "Manual entry and reconciliation between accounting and records",
+    stage5: "Workflows run without re-entry, exceptions are flagged automatically, and cycle times are measured",
+    stages: [
+      "Invoices, receipts, and reports are prepared by hand. Data moves between systems by re-typing it.",
+      "Accounting software posts ledger entries automatically. Tuition charges, admissions follow-ups, and new-student set-up are handled one by one in spreadsheets and email.",
+      "Tuition billing and payment plans run on a schedule, and admissions inquiries trigger a templated acknowledgment. Month-end reports still need manual assembly.",
+      "Billing, the admissions pipeline, and re-enrollment run end to end with automated reminders. Staff step in only on exceptions, and financial reports are generated from the system within five working days of month-end.",
+      "Workflows from inquiry through enrollment, billing, records, and reporting run without manual re-entry. Exceptions are flagged automatically, and cycle times such as days-to-collect and inquiry-to-enrollment are measured each term."
+    ]
+  },
+  {
+    id: "ai",
+    name: "AI Policy & Analytics Deployment",
+    short: "AI & Analytics",
+    observes: "Two halves of one capability: whether AI use is governed (policy, approved tools, data-privacy review) and whether data and models are actually deployed in enrollment, retention, and student-support decisions.",
+    stage1: "No AI policy and no analysis beyond year-end headcounts",
+    stage5: "Reviewed AI policy with an approval process, and predictive models in production checked against outcomes",
+    stages: [
+      "There is no written AI policy, and staff and students use AI tools without school rules. Enrollment and retention are looked at only as year-end headcounts.",
+      "AI rules are set by individual teachers in their own syllabi. Enrollment counts are compared with the prior year once a year in a spreadsheet.",
+      "A school-wide written AI policy has been shared with staff and families. Inquiries, applications, and re-enrollment are reported each term against the prior year.",
+      "The AI policy includes an approved-tools list with a data-privacy review, and staff are trained on it. A dashboard updated at least weekly tracks the enrollment funnel, re-enrollment by grade, and student-risk indicators.",
+      "The AI policy is reviewed every year and new tools pass a documented approval process. Predictive models for enrollment or student risk run on current data, and their predictions are checked against actual outcomes each year."
+    ]
+  },
+  {
+    id: "systems",
+    name: "Systems Ownership & Change Capacity",
+    short: "Systems Ownership",
+    observes: "Who runs the systems, how well procedures are documented, and whether software stays within vendor support through planned upgrades.",
+    stage1: "One administrator runs everything and the knowledge is not shared",
+    stage5: "Dedicated systems team with current documentation and a planned upgrade and security cycle",
+    stages: [
+      "One person runs the core systems and nothing is documented. At least one core system is past vendor support with no replacement plan.",
+      "A second person has login access, but procedures live in one person's head. Software is upgraded only when something breaks or the vendor forces it.",
+      "Core procedures are written down in a shared location, and two or more staff can run billing and records. Every core system is within vendor support.",
+      "A named systems role exists, and documentation is reviewed at least yearly. Upgrades are scheduled in an annual calendar and budget.",
+      "A dedicated systems team keeps documentation current and tests cross-coverage. A written multi-year technology plan covers upgrades, security review, and replacements and is reviewed by leadership each year."
+    ]
+  }
+];
+
+// Answer options are listed from value 1 to value 5. Every option carries an explicit integer value.
+const Q = (id, dim, text, opts) => ({ id, dim, text, options: opts.map((label, i) => ({ value: i + 1, label })) });
+
+const QUESTIONS = [
+  // ---- Student & Family Data Foundation
+  Q("D1", "data", "Where is the master copy of a currently enrolled family's contact and household information kept?", [
+    "On paper or in individual staff spreadsheets",
+    "In the SIS, but billing and admissions each keep their own separate copy",
+    "In the SIS, linked to billing and admissions by a shared student ID and synced on a schedule (nightly or weekly)",
+    "In one system of record used by admissions, academics, and billing; a change is visible to every office the same day",
+    "In one system of record or governed integrations; a change reaches every connected tool (including messaging and athletics) within minutes"
+  ]),
+  Q("D2", "data", "When a family's address or guardian information changes, how many places must staff update by hand? (Count paper files and spreadsheets as places.)", [
+    "Four or more",
+    "Three",
+    "Two",
+    "One, and it syncs to the other systems within a day",
+    "None: the family updates it in the portal and the change flows to every system automatically"
+  ]),
+  Q("D3", "data", "Can staff produce one list of every enrolled student showing grade level, admission date, and current tuition balance?", [
+    "No, it would require pulling paper files or several spreadsheets",
+    "Yes, but only by exporting from two or more systems and combining them by hand",
+    "Yes, from one system, but balances are only as current as the last scheduled sync",
+    "Yes, from one system with data current as of today, run by business-office staff",
+    "Yes, any authorized staff member can run it on demand with live data, and what each role can see is restricted"
+  ]),
+  Q("D4", "data", "How are health forms, learning-support plans, and signed enrollment contracts stored?", [
+    "On paper only, in filing cabinets",
+    "Scanned into shared folders, not linked to the student record",
+    "Some of these document types are attached to the student record; others remain on paper or in folders",
+    "All three types are attached to the student record, with access restricted by role",
+    "All three are attached to the student record, access is role-based, and every view or change is audit-logged"
+  ]),
+  // ---- Family & Student Engagement Channels
+  Q("C1", "channels", "How do families complete the annual re-enrollment contract?", [
+    "Paper contract returned by hand or mail",
+    "Emailed PDF that is signed and returned, then re-keyed by staff",
+    "Online form, but staff copy the data into the student system by hand",
+    "Online in the parent portal with an electronic signature; data flows straight into the student record",
+    "Online in the portal or app, pre-filled from the existing record, with the deposit paid in the same step"
+  ]),
+  Q("C2", "channels", "How do families pay tuition?", [
+    "Check or cash at the school office only",
+    "Check, or card payment taken by staff over the phone or at the office",
+    "Online through a separate payment site that does not show the family's account balance",
+    "Online, with payment plans, in the same portal that shows the family's balance",
+    "Online in the same portal with autopay, and the school reports the share of families paying online each term"
+  ]),
+  Q("C3", "channels", "When the school must reach every family the same day (for example, a weather closure), what happens?", [
+    "Staff phone families or email from a personal or shared inbox",
+    "A mass email goes to a school list; there is no text messaging",
+    "A notification tool sends email and text, using its own contact list kept separately from the student system",
+    "One platform sends app push, text, and email using contacts synced from the student system; families choose their channel",
+    "As in the previous option, and staff review delivery and read reports and follow up with families who were not reached"
+  ]),
+  Q("C4", "channels", "How many separate logins does a parent need to see grades, the class schedule, the tuition balance, and school messages?", [
+    "There is no online access to at least two of these",
+    "Three or more logins",
+    "Two logins",
+    "One login covers all four",
+    "One login in a mobile app covers all four, plus athletics or activity schedules and school forms"
+  ]),
+  // ---- Administrative & Business Operations Automation
+  Q("O1", "ops", "How are monthly tuition statements or invoices produced?", [
+    "Prepared by hand in a word processor or spreadsheet",
+    "Created in accounting software, with each family's charges entered manually",
+    "Generated on a schedule from enrollment and payment-plan data; staff review each batch before sending",
+    "Generated and sent automatically; staff handle only exceptions such as failed payments",
+    "Sent automatically, failed payments trigger automatic reminders, and days-to-collect is reported each term"
+  ]),
+  Q("O2", "ops", "What happens after a prospective family submits an inquiry?", [
+    "It is written down or forwarded by email; follow-up depends on who sees it",
+    "It is logged in a spreadsheet and staff send individual follow-up emails",
+    "It is logged in an admissions system that sends a templated acknowledgment; later follow-ups are manual",
+    "The admissions system runs a scheduled sequence (acknowledgment, tour invitation, application reminders) and creates staff tasks automatically",
+    "As in the previous option, and conversion rates and time at each stage (inquiry, tour, application, enrollment) are measured every cycle"
+  ]),
+  Q("O3", "ops", "How does a newly admitted student's information get from admissions into the student information system and billing?", [
+    "Re-typed from a paper application",
+    "Re-typed from an online application or emailed export",
+    "Imported in batches by file upload (for example, CSV)",
+    "Transferred automatically when the contract is signed; staff verify each record",
+    "Transferred automatically with no manual step; mismatches are flagged for staff automatically"
+  ]),
+  Q("O4", "ops", "How soon after month-end does the head of school receive a financial report (budget vs. actual and receivables)?", [
+    "There is no regular monthly financial report",
+    "More than 15 working days, assembled by hand",
+    "6 to 15 working days, partly assembled by hand",
+    "Within 5 working days, generated from the accounting system",
+    "Any day, on demand, from a dashboard fed by live system data"
+  ]),
+  // ---- AI Policy & Analytics Deployment (two governance + two deployment questions)
+  Q("A1", "ai", "What is the status of a written policy on student and staff use of generative AI?", [
+    "There is no written policy",
+    "Individual teachers set their own rules in their syllabi; there is no school-wide policy",
+    "A school-wide written policy exists and has been shared with staff and families",
+    "The policy is in the handbook, includes an approved-tools list, and staff were trained on it this school year",
+    "As in the previous option, and the policy was formally reviewed within the last 12 months, with new tools approved through a documented process"
+  ]),
+  Q("A2", "ai", "Before staff use an AI tool with student or family data, what review takes place?", [
+    "None; staff use whatever tools they choose",
+    "Staff have been told informally not to enter student data into AI tools",
+    "A written rule bans entering student data into unapproved tools, but no approved list exists",
+    "An approved-tools list exists, and each tool's data-privacy terms are reviewed before it is approved",
+    "As in the previous option, and use of approved tools is monitored and the list is re-reviewed each year"
+  ]),
+  Q("A3", "ai", "How does leadership track enrollment and re-enrollment?", [
+    "Only as a headcount at the start of the year",
+    "Year-over-year counts in a spreadsheet, updated once or twice a year",
+    "A report each term of inquiries, applications, enrollments, and re-enrollment compared with the prior year",
+    "A dashboard updated at least weekly showing the full funnel and re-enrollment by grade",
+    "A forecasting model projects next year's enrollment and re-enrollment, and its projections are compared with actual results each year"
+  ]),
+  Q("A4", "ai", "How does the school identify students at risk of leaving or falling behind?", [
+    "It does not, until a family announces a withdrawal",
+    "Individual teachers or advisors raise concerns informally",
+    "A periodic report flags students on fixed criteria (for example, grades, attendance, or overdue balance)",
+    "A dashboard combining academic, attendance, and billing indicators is reviewed by a team on a set schedule",
+    "A predictive model scores each student's risk on current data, and its flags are checked against actual outcomes"
+  ]),
+  // ---- Systems Ownership & Change Capacity
+  Q("S1", "systems", "If the person who usually runs tuition billing and student records were absent for two weeks, who could do the work?", [
+    "No one; the work would wait until they returned",
+    "One other person has login access but no written procedure",
+    "Two or more people, using written procedures",
+    "Two or more people with written procedures, overseen by a named systems role",
+    "A systems team, with cross-coverage scheduled and tested (each backup runs the process at least once a year)"
+  ]),
+  Q("S2", "systems", "Are core procedures (billing run, enrollment set-up, report cards, user access) documented?", [
+    "Nothing is written down",
+    "Notes exist for some tasks, kept by one person",
+    "Written procedures for all core tasks are kept in a shared location",
+    "Written procedures have a named owner and are reviewed at least yearly",
+    "Procedures are reviewed yearly and updated whenever a system changes, with a dated change log"
+  ]),
+  Q("S3", "systems", "Are all systems that hold student, family, or financial data within vendor support (still receiving security updates)?", [
+    "At least one core system has been out of support for over a year, with no replacement plan",
+    "At least one core system is out of support; replacement has been discussed but not budgeted",
+    "All core systems are supported, but upgrades happen only when the vendor forces them or something fails",
+    "All core systems are supported, and upgrades are scheduled in an annual calendar and budget",
+    "All are supported, under a written multi-year technology plan covering upgrades, security review, and replacement that leadership reviews each year"
+  ]),
+  Q("S4", "systems", "Who is formally responsible for the school's administrative systems?", [
+    "No one is assigned; whoever is available handles problems",
+    "One staff member handles systems on top of a different primary job, with no time allocated",
+    "A staff member has systems duties written into their job description with time allocated (part-time)",
+    "A full-time systems or database manager role exists",
+    "A dedicated team of two or more staff runs student and business systems under an annual plan"
+  ])
+];
+
+// Profile rules, checked in this order; the first that fires is the profile.
+// s = { data, channels, ops, ai, systems } rounded to 2 decimals. lowest2 = ids of the two lowest dimensions.
+const PROFILES = [
+  {
+    id: "paper",
+    name: "Paper-Bound Operation",
+    rule: "All five dimensions below 2.5",
+    meaning: "The school runs on manual work and aging, partly unsupported tools. Every dimension is weak at once, so a new channel or AI project would sit on ground that cannot hold it.",
+    action: "Replace unsupported accounting and records software with one supported cloud student information system that includes billing, before buying anything else."
+  },
+  {
+    id: "integrated",
+    name: "Integrated Campus",
+    rule: "All five dimensions 4.0 or higher",
+    meaning: "The foundation, channels, and operations are strong and owned. The constraint shifts from capability to governance and ambition: using the data the school already has to predict and act.",
+    action: "Deploy a predictive re-enrollment model under the AI policy's approval process, and validate its flags against actual withdrawals for one full year."
+  },
+  {
+    id: "keyperson",
+    name: "Key-Person Risk",
+    rule: "Systems Ownership & Change Capacity at 3.0 or lower and at least 1.0 below each of the other four",
+    meaning: "The school has more capability than it can sustain: its tools work only because one or two people know how to run them. If they leave, billing, records, or communications stall. This is the execution gap.",
+    action: "Write down the core billing and records procedures and cross-train a second staff member to run them before any new purchase."
+  },
+  {
+    id: "fragmented",
+    name: "Fragmented Records",
+    rule: "Student & Family Data Foundation at 3.0 or lower and at least 1.0 below each of the other four",
+    meaning: "The school has portals, automated billing, and possibly analytics, but they draw on disconnected records. Families get inconsistent information, staff re-key data, and every report is only as good as the weakest copy.",
+    action: "Assign one student and family ID across admissions, academics, and billing, and consolidate to a single system of record before adding tools."
+  },
+  {
+    id: "digitalized",
+    name: "Digitalized, Not Transforming",
+    rule: "Family & Student Engagement Channels 4.0 or higher, AI Policy & Analytics Deployment 2.5 or lower, and AI Policy & Analytics Deployment is one of the two lowest dimensions",
+    meaning: "Families see a modern school, but decisions still rest on instinct and AI use is unmanaged. The data the portal collects is not being used, and ungoverned AI creates academic-integrity and privacy risk.",
+    action: "Adopt a written AI academic-integrity and data-privacy policy this term, then build a weekly enrollment-funnel dashboard from the data the portal already collects."
+  }
+];
+
+// Used when no profile rule fires: the lowest dimension's default action. Ties broken by this priority order.
+const TIE_PRIORITY = ["data", "systems", "ops", "channels", "ai"];
+const DEFAULT_ACTIONS = {
+  data: "Consolidate to a single student and family ID across systems.",
+  systems: "Document core procedures and cross-train a second person.",
+  ops: "Automate tuition billing and payment plans.",
+  channels: "Move re-enrollment and tuition payment online in one portal.",
+  ai: "Publish a written AI academic-integrity and data-privacy policy."
+};
+
+// ---------- Scoring engine ----------
+const EPS = 1e-9;
+const round2 = x => Math.round(x * 100) / 100;
+
+function computeScores(answers) {
+  const s = {};
+  DIMENSIONS.forEach(d => {
+    const vals = QUESTIONS.filter(q => q.dim === d.id).map(q => answers[q.id]);
+    s[d.id] = round2(vals.reduce((a, b) => a + b, 0) / vals.length);
+  });
+  return s;
+}
+
+// Sort ascending by score; ties broken by TIE_PRIORITY (Data, Systems, Ops, Channels, AI).
+function rankDimensions(s) {
+  return DIMENSIONS.map(d => d.id).sort((a, b) =>
+    (s[a] - s[b]) || (TIE_PRIORITY.indexOf(a) - TIE_PRIORITY.indexOf(b)));
+}
+
+function belowAllOthers(s, id, gap) {
+  return Object.keys(s).filter(k => k !== id).every(k => s[k] - s[id] >= gap - EPS);
+}
+
+const RULES = {
+  paper:       (s) => Object.values(s).every(v => v < 2.5 - EPS),
+  integrated:  (s) => Object.values(s).every(v => v >= 4.0 - EPS),
+  keyperson:   (s) => s.systems <= 3.0 + EPS && belowAllOthers(s, "systems", 1.0),
+  fragmented:  (s) => s.data <= 3.0 + EPS && belowAllOthers(s, "data", 1.0),
+  digitalized: (s, ranked) => s.channels >= 4.0 - EPS && s.ai <= 2.5 + EPS && s.ai <= s[ranked[1]] + EPS
+};
+
+function interpret(s) {
+  const ranked = rankDimensions(s);
+  const lowest2 = ranked.slice(0, 2);
+  const minScore = s[ranked[0]];
+  const tiedLowest = ranked.filter(id => Math.abs(s[id] - minScore) < EPS);
+  const profile = PROFILES.find(p => RULES[p.id](s, ranked)) || null;
+  return { ranked, lowest2, tiedLowest, profile };
+}
+
+// ---------- Rendering ----------
+const form = document.getElementById("assessment");
+const dimById = Object.fromEntries(DIMENSIONS.map(d => [d.id, d]));
+const answers = {};
+
+function el(tag, attrs = {}, ...kids) {
+  const n = document.createElement(tag);
+  Object.entries(attrs).forEach(([k, v]) => k === "class" ? n.className = v : k === "text" ? n.textContent = v : n.setAttribute(k, v));
+  kids.forEach(k => n.append(k));
+  return n;
+}
+
+function renderQuestions() {
+  DIMENSIONS.forEach((d, i) => {
+    const sec = el("section", { class: "dim", id: "dim-" + d.id, "aria-labelledby": "h-" + d.id });
+    sec.append(el("div", { class: "dim-head" },
+      el("div", { class: "num", text: "Dimension " + (i + 1) + " of " + DIMENSIONS.length }),
+      el("h2", { id: "h-" + d.id, text: d.name }),
+      el("p", { text: d.observes })));
+    QUESTIONS.filter(q => q.dim === d.id).forEach(q => {
+      const fs = el("fieldset", { class: "q", id: "q-" + q.id });
+      fs.append(el("legend", {}, el("span", { class: "qid", text: q.id }), el("span", { text: q.text })));
+      const opts = el("div", { class: "opts" });
+      q.options.forEach(o => {
+        const input = el("input", { type: "radio", name: q.id, value: String(o.value) });
+        input.addEventListener("change", () => { answers[q.id] = o.value; fs.classList.remove("missing"); updateProgress();
+          document.getElementById("results").classList.remove("show"); }); // hide stale results until resubmitted
+        opts.append(el("label", { class: "opt" }, input, el("span", { text: o.label })));
+      });
+      fs.append(opts);
+      sec.append(fs);
+    });
+    form.append(sec);
+  });
+}
+
+function updateProgress() {
+  const bar = document.getElementById("progressBar");
+  bar.innerHTML = "";
+  DIMENSIONS.forEach(d => {
+    const qs = QUESTIONS.filter(q => q.dim === d.id);
+    const done = qs.filter(q => answers[q.id]).length;
+    bar.append(el("a", { class: "pill" + (done === qs.length ? " done" : ""), href: "#dim-" + d.id, text: d.short + " " + done + "/" + qs.length }));
+  });
+  bar.append(el("span", { class: "count", text: Object.keys(answers).length + " of " + QUESTIONS.length + " answered" }));
+}
+
+function setAnswer(qid, value) {
+  const input = form.querySelector('input[name="' + qid + '"][value="' + value + '"]');
+  input.checked = true;
+  answers[qid] = value;
+  document.getElementById("q-" + qid).classList.remove("missing");
+}
+
+let chart = null;
+function renderResults() {
+  const s = computeScores(answers);
+  const r = interpret(s);
+  const res = document.getElementById("results");
+  res.classList.add("show");
+
+  // No composite score on purpose: a single roll-up hides the dimensional story (Week 5 reading, 5.14 and 5.17).
+  document.getElementById("resSub").textContent =
+    "Read the shape, not a single number: the profile below is chosen from the pattern across all five dimensions.";
+
+  // Radar
+  const labels = DIMENSIONS.map(d => d.name);
+  const data = DIMENSIONS.map(d => s[d.id]);
+  const pointColors = DIMENSIONS.map(d => r.lowest2.includes(d.id) ? "#9a3412" : "#1f3864");
+  if (chart) chart.destroy();
+  chart = new Chart(document.getElementById("radar"), {
+    type: "radar",
+    data: { labels, datasets: [{ label: "Your school", data, fill: true,
+      backgroundColor: "rgba(47,85,151,0.16)", borderColor: "#2f5597", borderWidth: 2,
+      pointBackgroundColor: pointColors, pointBorderColor: "#fff", pointBorderWidth: 2, pointRadius: 5, pointHoverRadius: 7 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: { duration: 500 },
+      layout: { padding: { left: 6, right: 6, top: 4, bottom: 4 } },
+      scales: { r: { min: 0, max: 5, ticks: { stepSize: 1, backdropColor: "transparent", color: "#7a8396", font: { size: 11 } },
+        grid: { color: "#e3e7ee" }, angleLines: { color: "#e3e7ee" },
+        pointLabels: { color: "#1a2233", padding: 6, font: { size: 11, weight: "600" },
+          callback: (label) => wrapLabel(label, 15) } } },
+      plugins: { legend: { display: false },
+        tooltip: { callbacks: { title: (items) => items[0].label, label: (c) => "Score " + c.raw.toFixed(2) + " of 5" } } }
+    }
+  });
+
+  // Score table
+  const tbody = document.querySelector("#scoreTable tbody");
+  tbody.innerHTML = "";
+  DIMENSIONS.forEach(d => {
+    const low = r.lowest2.includes(d.id);
+    const nameCell = el("td", {}, el("span", { text: d.name }));
+    if (low) nameCell.append(el("span", { class: "tag", text: "Lowest two" }));
+    const bar = el("div", { class: "bar" }); const fill = el("span"); fill.style.width = (s[d.id] / 5 * 100) + "%"; bar.append(fill);
+    nameCell.append(bar);
+    tbody.append(el("tr", { class: low ? "low" : "" }, nameCell, el("td", { class: "num", text: s[d.id].toFixed(2) })));
+  });
+
+  // Interpretation
+  const box = document.getElementById("interpretation");
+  box.innerHTML = "";
+  const prof = el("div", { class: "profile" });
+  if (r.profile) {
+    prof.append(el("div", { class: "label", text: "Interpretation Guide profile" }),
+      el("h3", { text: r.profile.name }),
+      el("p", { class: "rule", text: "Why this profile: " + r.profile.rule + "." }),
+      el("p", { text: r.profile.meaning }),
+      el("div", { class: "action" }, el("strong", { text: "Recommended next action" }), el("span", { text: r.profile.action })));
+  } else {
+    const first = dimById[r.lowest2[0]];
+    prof.append(el("div", { class: "label", text: "Interpretation Guide" }),
+      el("h3", { text: "Mixed profile" }),
+      el("p", { class: "rule", text: "No archetypal pattern rule fires, so the recommendation follows the lowest-scoring dimension." }),
+      el("p", { text: "Your scores do not match one of the five archetypes. Start with " + first.name + ", your weakest dimension, and treat the second-lowest as the next priority." }),
+      el("div", { class: "action" }, el("strong", { text: "Recommended next action" }), el("span", { text: DEFAULT_ACTIONS[first.id] })));
+  }
+  box.append(prof);
+
+  const lows = el("div", { class: "lows" });
+  r.lowest2.forEach((id, i) => {
+    lows.append(el("div", { class: "low-card" },
+      el("div", { class: "k", text: (i === 0 ? "Lowest" : "Second lowest") + " · " + s[id].toFixed(2) }),
+      el("h4", { text: dimById[id].name }),
+      el("p", { text: "Default action: " + DEFAULT_ACTIONS[id] })));
+  });
+  box.append(lows);
+  if (r.tiedLowest.length > 1) {
+    const names = r.tiedLowest.map(id => dimById[id].name);
+    const list = names.length === 2 ? names.join(" and ") : names.slice(0, -1).join(", ") + ", and " + names[names.length - 1];
+    const score = s[r.tiedLowest[0]].toFixed(2);
+    const order = "Data Foundation, Systems Ownership, Operations Automation, Engagement Channels, then AI & Analytics";
+    let msg;
+    if (r.tiedLowest.length === 2) {
+      msg = "Tie: " + list + " share the lowest score (" + score + "), so both are shown. " +
+        (r.profile ? "The profile above sets which action comes first." : "Ties are ordered " + order + ".");
+    } else {
+      msg = "Tie: " + list + " all share the lowest score (" + score + "). The two shown follow the priority order " + order + ".";
+    }
+    box.append(el("p", { class: "tie-note", text: msg }));
+  }
+
+  res.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function wrapLabel(text, max) {
+  const words = text.split(" "); const lines = []; let line = "";
+  words.forEach(w => { if ((line + " " + w).trim().length > max) { lines.push(line.trim()); line = w; } else line += " " + w; });
+  if (line.trim()) lines.push(line.trim());
+  return lines;
+}
+
+document.getElementById("submitBtn").addEventListener("click", () => {
+  const missing = QUESTIONS.filter(q => !answers[q.id]);
+  const err = document.getElementById("errorMsg");
+  if (missing.length) {
+    missing.forEach(q => document.getElementById("q-" + q.id).classList.add("missing"));
+    err.textContent = missing.length + (missing.length === 1 ? " question still needs" : " questions still need") + " an answer. Results appear once all " + QUESTIONS.length + " are answered.";
+    document.getElementById("results").classList.remove("show");
+    document.getElementById("q-" + missing[0].id).scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
+  err.textContent = "";
+  renderResults();
+});
+
+// Sample schools for the Stage 2 / Stage 4 simulations (Appendix A of the Framework doc).
+// Answers vary within each stage so the two radar shapes differ in shape, not just size.
+const SIM_ANSWERS = {
+  2: { D1: 2, D2: 2, D3: 1, D4: 2, C1: 2, C2: 3, C3: 2, C4: 2, O1: 2, O2: 2, O3: 2, O4: 2,
+       A1: 1, A2: 2, A3: 2, A4: 1, S1: 2, S2: 2, S3: 1, S4: 3 },
+  4: { D1: 4, D2: 4, D3: 5, D4: 4, C1: 5, C2: 4, C3: 5, C4: 4, O1: 4, O2: 4, O3: 4, O4: 4,
+       A1: 4, A2: 4, A3: 4, A4: 4, S1: 4, S2: 5, S3: 4, S4: 4 }
+};
+document.querySelectorAll("[data-sim]").forEach(b => b.addEventListener("click", () => {
+  const stage = Number(b.dataset.sim);
+  QUESTIONS.forEach(q => setAnswer(q.id, SIM_ANSWERS[stage][q.id]));
+  document.getElementById("results").classList.remove("show");
+  document.getElementById("errorMsg").textContent = "";
+  updateProgress();
+}));
+
+document.getElementById("resetBtn").addEventListener("click", () => {
+  form.reset();
+  Object.keys(answers).forEach(k => delete answers[k]);
+  document.querySelectorAll("fieldset.q").forEach(f => f.classList.remove("missing"));
+  document.getElementById("results").classList.remove("show");
+  document.getElementById("errorMsg").textContent = "";
+  updateProgress();
+  window.scrollTo({ top: 0 });
+});
+
+renderQuestions();
+updateProgress();
+</script>
+</body>
+</html>
